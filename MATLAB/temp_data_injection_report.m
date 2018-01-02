@@ -201,11 +201,18 @@ for EP_ID =EP
             % <test case 2: frequency accuracy, make sure frequency is with in 0.25 of intenfed intended value >
             %%% calc fft from data
             
-            %%% find peaks frequencys
-            noise_floor=1.03298485e-3
-            [data_pks,locs] = findpeaks(data_acc_fft,'MinPeakProminence',noise_floor); % need to set val of MinPeakProminence
-            [sigg_pks,sigg_locs] = findpeaks(sigg_fft,'MinPeakProminence',noise_floor); % need to set val of MinPeakProminence
+            %%% find peaks frequencys 
+            %MATLAB function - NOT FOR USE
+%%             [data_pks,locs] = findpeaks(data_acc_fft,'MinPeakProminence',noise_floor); % need to set val of MinPeakProminence
+%%            [sigg_pks,sigg_locs] = findpeaks(sigg_fft,'MinPeakProminence',noise_floor); % need to set val of MinPeakProminence
+% %        
             
+            %GENERIC code - use for GO
+            options.PeakProminence=noise_floor;
+            [data_pks,locs] =findpeaks_sigvalid(data_acc_fft,options); % need to set val of MinPeakProminence
+            [sigg_pks,sigg_locs] = findpeaks_sigvalid(sigg_fft,options); % need to set val of MinPeakProminence
+            
+
             try
                 % check that peaks are at the the correct amplitude and frequency
                 f_res = Fs/numel(data_acc);
