@@ -242,44 +242,41 @@ for EP_ID =EP
                 end
                 
                 % check for noise level
-                if numel(locs) == 0
-                    n=(round(6/f_res):length(data_acc_fft))
-                    winA=data_acc_fft(n)
-                    results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
-                        [ mean([winA]) , std([winA]) , min([winA]) , max([winA])];
-                elseif  numel(locs) == 1
+                if  numel(locs) == 1
                     n  = round(FeatherHz/f_res); %n index of FeatherHz
-                    try % make sure the right window doesn't exceed the length of the vector
-                        %   winR = data_acc_fft( locs+n:locs+n+round(N*0.005));
-                        winR = data_acc_fft( locs+n:locs+round(numel(data_acc_fft(locs+n:end))*0.90));
-                        %                         winR = data_acc_fft( locs+n:end);
-                    catch
-                        winR = data_acc_fft(locs+n:end);
+                    if locs+n < round(6500/f_res)
+                        winR = data_acc_fft( locs+n:round(6500/f_res));
+                    else
+                        winR = [];
                     end
-                    try % make sure the left window shorter than the vector
-                        winL = data_acc_fft( locs-n-round(N*0.005):locs-n);
-                    catch
-                        winL = data_acc_fft(round(6/f_res):locs-n);
-                    end           
-                    if length(   winL)==0 |    length(   winR)==0
+                    if round((hi_filter+1)/f_res) < locs-n
+                        winL = data_acc_fft(round((hi_filter+1)/f_res):locs-n);
+                    else
+                        winL = [];
+                    end
+                    
+                    if isempty(winL) && isempty(winR)
                         error('Window length is 0');
                     end
-                    results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
-                        [ mean([winL; winR]) , std([winL; winR]) , min([winL; winR]) , max([winL; winR])];
-                else % check the average noise in between the peaks
+                    win = [winL; winR];
+                elseif  numel(locs)  > 1     % check the average noise in between the peaks
                     for ind_peak =1:numel(locs)-1
-                        n = locs(ind_peak+1)- locs(ind_peak);%n index between peaks
-                        takeidx=locs(ind_peak) + round(n*0.1): locs(ind_peak+1) - round(n*0.1)
-                        minlegitidx=round(6/f_res)
-                        takeidx_legit=find( takeidx>minlegitidx)
-                        if takeidx_legit | length(takeidx)==0
+                        n = locs(ind_peak+1)- locs(ind_peak) - 2;%n index between peaks
+                        takeidx = ( locs(ind_peak) + round(n*0.1)+1 ) : ( locs(ind_peak+1) - round(n*0.1)-1 );
+                        if length(takeidx) == 0
                             error('No valid window length');
                         end
-                        win = data_acc_fft(  takeidx);
-                        results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max =  ...
-                            [ mean(win) , std(win) , min(win) , max(win)];
+                        win = data_acc_fft( takeidx);
                     end
+                else
+                    n=(round((hi_filter+1)/f_res):round(6500/f_res));
+                    win=data_acc_fft(n);
                 end
+                results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max = ...
+                    [ mean([win]) , std([win]) , min([win]) , max([win])];```
+                
+                
+                
                 noiseAVG(ind,:) = results.(test_name).(['vib' num2str(ind)]).noise_mean_stdev_min_max;
                 peakind = 1 ;
             catch
